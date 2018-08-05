@@ -60,13 +60,13 @@ class QtavConan(ConanFile):
     #def package(self):
 
     def package_info(self):
-        self.cpp_info.includedirs = ['include']  # Ordered list of include paths
-        self.cpp_info.libs = []  # The libs to link against
-        self.cpp_info.libdirs = ['lib']  # Directories where libraries can be found
-        self.cpp_info.builddirs = ['cmake']  # Ordered list with build scripts paths, by default [‘’]. CMake will search in these dirs for cmake files, like findXXX.cmake
-        self.cpp_info.bindirs = ['bin']  # Directories where executables and shared libs can be found
-        self.cpp_info.defines = []  # preprocessor definitions
-        self.cpp_info.cflags = []  # pure C flags
-        self.cpp_info.cppflags = []  # C++ compilation flags
-        self.cpp_info.sharedlinkflags = []  # linker flags
-        self.cpp_info.exelinkflags = []  # linker flags
+        self.cpp_info.includedirs = ['include']
+        self.cpp_info.libs = []
+        self.cpp_info.libdirs = ['lib']
+        self.cpp_info.builddirs = ['cmake']
+        self.cpp_info.bindirs = ['bin']
+        self.cpp_info.defines = []
+        self.cpp_info.cflags = []
+        self.cpp_info.cppflags = []
+        self.cpp_info.sharedlinkflags = []
+        self.cpp_info.exelinkflags = []
