@@ -8,7 +8,7 @@ class QtavConan(ConanFile):
     license = "LGPLv2.1"
     url = "https://github.com/Tereius/conan-QtAV.git"
     description = "QtAV is a multimedia playback library based on Qt and FFmpeg"
-    author = "Björn Stresing"
+    author = "Bjoern Stresing"
     homepage = "https://www.qtav.org/"
     requires = "Qt/[>=5.0]@bincrafters/stable", "ffmpeg/[>=3.4]@bincrafters/stable"
     settings = "os", "compiler", "build_type", "arch"
