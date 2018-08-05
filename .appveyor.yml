@@ -7,6 +7,7 @@ environment:
 
     CONAN_REFERENCE: "QtAV/1.12.0"
     CONAN_CHANNEL: "user/channel"
+    CONAN_USERNAME: "test"
     
     matrix:
         - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2015
