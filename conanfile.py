@@ -10,14 +10,14 @@ class QtavConan(ConanFile):
     description = "QtAV is a multimedia playback library based on Qt and FFmpeg"
     author = "Bjoern Stresing"
     homepage = "https://www.qtav.org/"
-    requires = "Qt/[>=5.0]@bincrafters/stable", "ffmpeg/[>=3.4]@bincrafters/stable"
+    requires = "Qt/5.11.1@bincrafters/stable", "ffmpeg/[>=3.4]@bincrafters/stable"
     settings = "os", "compiler", "build_type", "arch"
     options = {"shared": [True, False]}
     default_options = ("shared=True",
                         "Qt:shared=True",
                         "Qt:GUI=True",
                         "Qt:widgets=True",
-                        "Qt:openssl=yes",
+                        "Qt:openssl=True",
                         "Qt:qtbase=True",
                         "Qt:qtsvg=True",
                         "Qt:qtdeclarative=True",
