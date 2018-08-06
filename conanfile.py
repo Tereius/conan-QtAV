@@ -4,13 +4,13 @@ from conans import ConanFile, VisualStudioBuildEnvironment, MSBuild, tools
 
 class QtavConan(ConanFile):
     name = "QtAV"
-    version = "1.12.0"
+    version = "1.13.0-SNAPSHOT"
     license = "LGPLv2.1"
     url = "https://github.com/Tereius/conan-QtAV.git"
     description = "QtAV is a multimedia playback library based on Qt and FFmpeg"
     author = "Bjoern Stresing"
     homepage = "https://www.qtav.org/"
-    requires = "Qt/5.11.1@bincrafters/stable", "ffmpeg/[>=3.4]@bincrafters/stable"
+    requires = "Qt/5.11.1@bincrafters/stable", "ffmpeg/4.0@bincrafters/stable"
     settings = "os", "compiler", "build_type", "arch"
     options = {"shared": [True, False]}
     default_options = ("shared=True",
@@ -32,10 +32,13 @@ class QtavConan(ConanFile):
                         "ffmpeg:lzma=False",
                         "ffmpeg:bzlib=False",
                         "ffmpeg:iconv=False",
+                        "ffmpeg:freetype=False",
                         "ffmpeg:openjpeg=False",
                         "ffmpeg:openh264=False",
                         "ffmpeg:opus=False",
                         "ffmpeg:vorbis=False",
+                        "ffmpeg:zmq=False",
+                        "ffmpeg:sdl2=False",
                         "ffmpeg:x264=False",
                         "ffmpeg:x265=False",
                         "ffmpeg:vpx=False",
