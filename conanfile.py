@@ -1,4 +1,5 @@
-import json, os
+import os
+from shutil import copyfile
 from conans import ConanFile, VisualStudioBuildEnvironment, MSBuild, tools
 
 
@@ -50,7 +51,7 @@ class QtavConan(ConanFile):
     def source(self):
         git = tools.Git(folder="QtAV")
         git.clone("https://github.com/wang-bin/QtAV.git")
-        git.checkout("7f6929b49c25ca475a08f87e8b52aa1642d109dd")
+        git.checkout("34afa14316c2052bcef2822e82b32c11e0939e54")
 
     def build(self):
         env_build = VisualStudioBuildEnvironment(self)
@@ -58,9 +59,27 @@ class QtavConan(ConanFile):
             vcvars = tools.vcvars_command(self.settings)
             self.run('%s && qmake -r -tp vc "LIBS+=%s" "INCLUDEPATH+=%s" QtAV.pro' % (vcvars, ' -L'+ ' -L'.join(env_build.lib_paths), ' '.join(env_build.include_paths)), cwd="QtAV")
             ms_env = MSBuild(self)
-            ms_env.build(project_file="QtAV/QtAV.sln")
+            ms_env.build(project_file="QtAV/QtAV.sln", targets=["QtAV", "QtAVWidgets"], upgrade_project=False) # Missing dependency information between targets
+            ms_env.build(project_file="QtAV/QtAV.sln", upgrade_project=False)
 
-    #def package(self):
+    def package(self):
+
+        arch = str(self.settings.arch)
+        self.copy("QtAV/lib_win_" + arch + "/*Qt*AV*.lib", dst="lib", keep_path=False)
+        #self.copy("QtAV/lib_win_" + arch + "/QtAV1.lib", dst="lib/Qt5AV.lib", keep_path=False)
+        #self.copy("QtAV/lib_win_" + arch + "/QtAVd1.lib", dst="lib/Qt5AVd.lib", keep_path=False)
+        self.copy("QtAV/lib_win_" + arch + "/*QmlAV*.lib", dst="lib/qml/QtAV", keep_path=False)
+        #self.copy("QtAV/lib_win_" + arch + "/QtAVWidgets1.lib", dst="lib/Qt5AVWidgets.lib", keep_path=False)
+        #self.copy("QtAV/lib_win_" + arch + "/QtAVWidgetsd1.lib", dst="lib/Qt5AVWidgetsd.lib", keep_path=False)
+        self.copy("QtAV/bin/Qt*AV*.dll", dst="bin", keep_path=False)
+        self.copy("QtAV/bin/*QmlAV*.dll", dst="lib/qml/QtAV", keep_path=False)
+        self.copy("QtAV/src/QtAV/*.h", dst="include/QtAV", keep_path=False)
+        copyfile(self.build_folder + "/QtAV/src/QtAV/QtAV", self.package_folder + "/include/QtAV/QtAV") # Not a folder
+        self.copy("QtAV/widgets/QtAVWidgets/*.h", dst="include/QtAVWidgets", keep_path=False)
+        copyfile(self.build_folder + "/QtAV/widgets/QtAVWidgets/QtAVWidgets", self.package_folder + "/include/QtAVWidgets/QtAVWidgets") # Not a folder
+        copyfile(self.build_folder + "/QtAV/qml/qmldir", self.package_folder + "/lib/qml/QtAV/qmldir") # Not a folder
+        self.copy("QtAV/qml/Video.qml", dst="lib/qml/QtAV", keep_path=False)
+        self.copy("QtAV/qml/plugins.qmltypes", dst="lib/qml/QtAV", keep_path=False)
 
     def package_info(self):
         self.cpp_info.includedirs = ['include']
