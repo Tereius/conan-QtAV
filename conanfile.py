@@ -15,7 +15,7 @@ class QtavConan(ConanFile):
     author = "Bjoern Stresing"
     homepage = "https://www.qtav.org/"
     requires = "Qt/[>=5.0]@tereius/stable", "ffmpeg/4.0@tereius/stable"
-    settings = "os", "compiler", "build_type", "arch", "os_build", "arch_build"
+    settings = "os", "compiler", "build_type", "arch"
     options = {"shared": [True, False]}
     default_options = ("shared=True",
                         "Qt:shared=True",
@@ -43,11 +43,11 @@ class QtavConan(ConanFile):
     def build_requirements(self):
         if self.settings.os == 'Android':
             self.build_requires("android-ndk/r17b@tereius/stable")
-            if self.settings.os_build == 'Windows':
+            if tools.os_info.is_windows:
                 self.build_requires("msys2/20161025@tereius/stable")
 
     def configure(self):
-        if self.settings.os == 'Android' and self.settings.os_build == 'Windows':
+        if self.settings.os == 'Android' and tools.os_info.is_windows:
             self.options["msys2"].provideMinGW = True
             self.options["Qt"].qtandroidextras = True
 
@@ -64,13 +64,17 @@ class QtavConan(ConanFile):
                 ms_env = MSBuild(self)
                 ms_env.build(project_file="QtAV/QtAV.sln", targets=["QtAV", "QtAVWidgets"], upgrade_project=False) # Missing dependency information between targets
                 ms_env.build(project_file="QtAV/QtAV.sln", upgrade_project=False)
-
-        elif self.settings.os == "Android" and self.settings.os_build == "Windows":
-                autotools = AutoToolsBuildEnvironment(self, win_bash=True)
-                with tools.environment_append(autotools.vars):
-                    tools.replace_in_file("QtAV/.qmake.conf", "QTAV_MAJOR_VERSION = 1", "QTAV_MAJOR_VERSION = 1\nLIBS += %s\nINCLUDEPATH += %s\nCONFIG += %s\n" % (' -L'+ ' -L'.join(autotools.library_paths), ' '.join(autotools.include_paths), build_type))
-                    self.run('qmake QtAV.pro', win_bash=True, cwd="QtAV")
-                    self.run("make", win_bash=True, cwd="QtAV")
+        else:
+            autotools = AutoToolsBuildEnvironment(self, win_bash=tools.os_info.is_windows)
+            envvars = autotools.vars
+            envvars["LD_LIBRARY_PATH"] = "".join([i+":" for i in autotools.library_paths])
+            envvars["LD_RUN_PATH"] = "".join([i+":" for i in autotools.library_paths])
+            with tools.environment_append(envvars):
+                self.run("printenv", win_bash=tools.os_info.is_windows, cwd="QtAV")
+                tools.replace_in_file("QtAV/.qmake.conf", "QTAV_MAJOR_VERSION = 1", "QTAV_MAJOR_VERSION = 1\nLIBS += %s\nINCLUDEPATH += %s\nCONFIG += %s\n" % (' -L'+ ' -L'.join(autotools.library_paths), ' '.join(autotools.include_paths), build_type))
+                self.run('qmake QtAV.pro', win_bash=tools.os_info.is_windows, cwd="QtAV")
+                self.run("make", win_bash=tools.os_info.is_windows, cwd="QtAV")
+            
 
     def package(self):
 
@@ -79,6 +83,9 @@ class QtavConan(ConanFile):
             self.copy("QtAV/lib_win_" + arch + "/*Qt*AV*.lib", dst="lib", keep_path=False)
         elif self.settings.os == "Android":
             self.copy("QtAV/lib_android_" + "/*Qt*AV*.so", dst="lib", keep_path=False)
+        else:
+            self.copy("QtAV/lib_linux_" + arch + "/*Qt*AV*.so", dst="lib", keep_path=False)
+        
 
         #self.copy("QtAV/lib_win_" + arch + "/QtAV1.lib", dst="lib/Qt5AV.lib", keep_path=False)
         #self.copy("QtAV/lib_win_" + arch + "/QtAVd1.lib", dst="lib/Qt5AVd.lib", keep_path=False)
@@ -87,6 +94,8 @@ class QtavConan(ConanFile):
             self.copy("QtAV/lib_win_" + arch + "/*QmlAV*.lib", dst="lib/qml/QtAV", keep_path=False)
         elif self.settings.os == "Android":
             self.copy("QtAV/lib_android_" + "/*QmlAV*.so", dst="lib/qml/QtAV", keep_path=False)
+        else:
+            self.copy("QtAV/lib_linux_" + arch + "/*QmlAV*.so", dst="lib/qml/QtAV", keep_path=False)
 
         #self.copy("QtAV/lib_win_" + arch + "/QtAVWidgets1.lib", dst="lib/Qt5AVWidgets.lib", keep_path=False)
         #self.copy("QtAV/lib_win_" + arch + "/QtAVWidgetsd1.lib", dst="lib/Qt5AVWidgetsd.lib", keep_path=False)
