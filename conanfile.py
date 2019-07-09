@@ -14,7 +14,7 @@ class QtavConan(ConanFile):
     description = "QtAV is a multimedia playback library based on Qt and FFmpeg"
     author = "Bjoern Stresing"
     homepage = "https://www.qtav.org/"
-    requires = "Qt/5.11.1@tereius/stable", "ffmpeg/4.0@tereius/stable"
+    requires = "Qt/[>=5.0]@tereius/stable", "ffmpeg/4.0@tereius/stable"
     settings = "os", "compiler", "build_type", "arch", "os_build", "arch_build"
     options = {"shared": [True, False]}
     default_options = ("shared=True",
