@@ -14,7 +14,7 @@ class QtavConan(ConanFile):
     description = "QtAV is a multimedia playback library based on Qt and FFmpeg"
     author = "Bjoern Stresing"
     homepage = "https://www.qtav.org/"
-    requires = "Qt/[>=5.0]@tereius/stable", "ffmpeg/4.0@tereius/stable"
+    requires = "Qt/[>=5.0 <6.0]@tereius/stable", "ffmpeg/[>=4.0 <5.0]@tereius/stable"
     settings = "os", "compiler", "build_type", "arch"
     options = {"shared": [True, False]}
     default_options = ("shared=True",
@@ -39,6 +39,7 @@ class QtavConan(ConanFile):
         git.clone("https://github.com/wang-bin/QtAV.git")
         git.checkout("34afa14316c2052bcef2822e82b32c11e0939e54")
         self.run("git submodule init && git submodule update", cwd="QtAV")
+        tools.replace_in_file(os.path.join(self.source_folder, "QtAV", "qml", "SGVideoNode.cpp"), "#include <QtQuick/QSGMaterialShader>", "#include <QtQuick/QSGMaterialShader>\n#include <QtQuick/QSGMaterial>")
 
     def build_requirements(self):
         if self.settings.os == 'Android':
@@ -70,10 +71,9 @@ class QtavConan(ConanFile):
             envvars["LD_LIBRARY_PATH"] = "".join([i+":" for i in autotools.library_paths])
             envvars["LD_RUN_PATH"] = "".join([i+":" for i in autotools.library_paths])
             with tools.environment_append(envvars):
-                self.run("printenv", win_bash=tools.os_info.is_windows, cwd="QtAV")
                 tools.replace_in_file("QtAV/.qmake.conf", "QTAV_MAJOR_VERSION = 1", "QTAV_MAJOR_VERSION = 1\nLIBS += %s\nINCLUDEPATH += %s\nCONFIG += %s\n" % (' -L'+ ' -L'.join(autotools.library_paths), ' '.join(autotools.include_paths), build_type))
                 self.run('qmake QtAV.pro', win_bash=tools.os_info.is_windows, cwd="QtAV")
-                self.run("make", win_bash=tools.os_info.is_windows, cwd="QtAV")
+                self.run("make -j %s" % tools.cpu_count(), win_bash=tools.os_info.is_windows, cwd="QtAV")
             
 
     def package(self):
@@ -84,7 +84,7 @@ class QtavConan(ConanFile):
         elif self.settings.os == "Android":
             self.copy("QtAV/lib_android_" + "/*Qt*AV*.so", dst="lib", keep_path=False)
         else:
-            self.copy("QtAV/lib_linux_" + arch + "/*Qt*AV*.so", dst="lib", keep_path=False)
+            self.copy("QtAV/lib_linux_" + arch + "/*Qt*AV*.so*", dst="lib", keep_path=False, symlinks=True)
         
 
         #self.copy("QtAV/lib_win_" + arch + "/QtAV1.lib", dst="lib/Qt5AV.lib", keep_path=False)
@@ -95,7 +95,7 @@ class QtavConan(ConanFile):
         elif self.settings.os == "Android":
             self.copy("QtAV/lib_android_" + "/*QmlAV*.so", dst="lib/qml/QtAV", keep_path=False)
         else:
-            self.copy("QtAV/lib_linux_" + arch + "/*QmlAV*.so", dst="lib/qml/QtAV", keep_path=False)
+            self.copy("QtAV/lib_linux_" + arch + "/*QmlAV*.so", dst="lib/qml/QtAV", keep_path=False, symlinks=True)
 
         #self.copy("QtAV/lib_win_" + arch + "/QtAVWidgets1.lib", dst="lib/Qt5AVWidgets.lib", keep_path=False)
         #self.copy("QtAV/lib_win_" + arch + "/QtAVWidgetsd1.lib", dst="lib/Qt5AVWidgetsd.lib", keep_path=False)
