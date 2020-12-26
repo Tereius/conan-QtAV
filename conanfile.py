@@ -71,14 +71,16 @@ class QtavConan(ConanFile):
             envvars["LD_LIBRARY_PATH"] = "".join([i+":" for i in autotools.library_paths])
             envvars["LD_RUN_PATH"] = "".join([i+":" for i in autotools.library_paths])
             with tools.environment_append(envvars):
-                tools.replace_in_file("QtAV/.qmake.conf", "QTAV_MAJOR_VERSION = 1", "QTAV_MAJOR_VERSION = 1\nLIBS += %s\nINCLUDEPATH += %s\nCONFIG += %s\n" % (' -L'+ ' -L'.join(autotools.library_paths), ' '.join(autotools.include_paths), build_type))
+                if "RASPBIAN_ROOTFS" in os.environ:
+                    tools.replace_in_file("QtAV/.qmake.conf", "QTAV_MAJOR_VERSION = 1", "QTAV_MAJOR_VERSION = 1\nDEFINES += CAPI_LINK_EGL\n")
+                tools.replace_in_file("QtAV/.qmake.conf", "QTAV_MAJOR_VERSION = 1", "CONFIG += no-examples\nQTAV_MAJOR_VERSION = 1\nLIBS += %s\nINCLUDEPATH += %s\nCONFIG += %s\n" % (' -L'+ ' -L'.join(autotools.library_paths), ' '.join(autotools.include_paths), build_type))
                 self.run('qmake QtAV.pro', win_bash=tools.os_info.is_windows, cwd="QtAV")
                 self.run("make -j %s" % tools.cpu_count(), win_bash=tools.os_info.is_windows, cwd="QtAV")
             
 
     def package(self):
 
-        arch = str(self.settings.arch)
+        arch = "*"
         if self.settings.os == "Windows":
             self.copy("QtAV/lib_win_" + arch + "/*Qt*AV*.lib", dst="lib", keep_path=False)
         elif self.settings.os == "Android":
@@ -108,9 +110,9 @@ class QtavConan(ConanFile):
         copyfile(self.build_folder + "/QtAV/src/QtAV/QtAV", self.package_folder + "/include/QtAV/QtAV") # Not a folder
         self.copy("QtAV/widgets/QtAVWidgets/*.h", dst="include/QtAVWidgets", keep_path=False)
         copyfile(self.build_folder + "/QtAV/widgets/QtAVWidgets/QtAVWidgets", self.package_folder + "/include/QtAVWidgets/QtAVWidgets") # Not a folder
-        copyfile(self.build_folder + "/QtAV/qml/qmldir", self.package_folder + "/lib/qml/QtAV/qmldir") # Not a folder
         self.copy("QtAV/qml/Video.qml", dst="lib/qml/QtAV", keep_path=False)
         self.copy("QtAV/qml/plugins.qmltypes", dst="lib/qml/QtAV", keep_path=False)
+        copyfile(self.build_folder + "/QtAV/qml/qmldir", self.package_folder + "/lib/qml/QtAV/qmldir") # Not a folder
 
     def package_info(self):
         self.env_info.QML2_IMPORT_PATH.append(os.path.join(self.package_folder, "lib/qml/QtAV"))
