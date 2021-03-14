@@ -14,7 +14,7 @@ class QtavConan(ConanFile):
     description = "QtAV is a multimedia playback library based on Qt and FFmpeg"
     author = "Bjoern Stresing"
     homepage = "https://www.qtav.org/"
-    requires = "Qt/[>=5.0 <6.0]@tereius/stable", "ffmpeg/[>=4.0 <5.0]@tereius/stable"
+    requires = "Qt/[^5.0]@tereius/stable", "ffmpeg/[^4.0]@tereius/stable"
     settings = "os", "compiler", "build_type", "arch"
     options = {"shared": [True, False]}
     default_options = ("shared=True",
@@ -40,6 +40,7 @@ class QtavConan(ConanFile):
         git.checkout("34afa14316c2052bcef2822e82b32c11e0939e54")
         self.run("git submodule init && git submodule update", cwd="QtAV")
         tools.replace_in_file(os.path.join(self.source_folder, "QtAV", "qml", "SGVideoNode.cpp"), "#include <QtQuick/QSGMaterialShader>", "#include <QtQuick/QSGMaterialShader>\n#include <QtQuick/QSGMaterial>")
+        tools.replace_in_file(os.path.join(self.source_folder, "QtAV", "src", "QtAV", "FilterContext.h"), "#include <QtGui/QPainter>", "#include <QtGui/QPainter>\n#include <QtGui/QPainterPath>")
 
     def build_requirements(self):
         if self.settings.os == 'Android':
