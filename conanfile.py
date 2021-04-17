@@ -42,15 +42,8 @@ class QtavConan(ConanFile):
         tools.replace_in_file(os.path.join(self.source_folder, "QtAV", "qml", "SGVideoNode.cpp"), "#include <QtQuick/QSGMaterialShader>", "#include <QtQuick/QSGMaterialShader>\n#include <QtQuick/QSGMaterial>")
         tools.replace_in_file(os.path.join(self.source_folder, "QtAV", "src", "QtAV", "FilterContext.h"), "#include <QtGui/QPainter>", "#include <QtGui/QPainter>\n#include <QtGui/QPainterPath>")
 
-    def build_requirements(self):
-        if self.settings.os == 'Android':
-            self.build_requires("android-ndk/r17b@tereius/stable")
-            if tools.os_info.is_windows:
-                self.build_requires("msys2/20161025@tereius/stable")
-
     def configure(self):
-        if self.settings.os == 'Android' and tools.os_info.is_windows:
-            self.options["msys2"].provideMinGW = True
+        if self.settings.os == 'Android':
             self.options["Qt"].qtandroidextras = True
 
     def build(self):
