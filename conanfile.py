@@ -37,7 +37,7 @@ class QtavConan(ConanFile):
     def source(self):
         git = tools.Git(folder="QtAV")
         git.clone("https://github.com/wang-bin/QtAV.git")
-        git.checkout("34afa14316c2052bcef2822e82b32c11e0939e54")
+        git.checkout("305e54041f2292ee27ce61183fa55a9a309f01c0")
         self.run("git submodule init && git submodule update", cwd="QtAV")
         tools.replace_in_file(os.path.join(self.source_folder, "QtAV", "qml", "SGVideoNode.cpp"), "#include <QtQuick/QSGMaterialShader>", "#include <QtQuick/QSGMaterialShader>\n#include <QtQuick/QSGMaterial>")
         tools.replace_in_file(os.path.join(self.source_folder, "QtAV", "src", "QtAV", "FilterContext.h"), "#include <QtGui/QPainter>", "#include <QtGui/QPainter>\n#include <QtGui/QPainterPath>")
@@ -50,26 +50,27 @@ class QtavConan(ConanFile):
 
         build_type = "debug" if self.settings.build_type == "Debug" else "release"
 
-        if self.settings.os == "Windows":
-            env_build = VisualStudioBuildEnvironment(self)
-            with tools.environment_append(env_build.vars):
-                vcvars = tools.vcvars_command(self.settings)
-                tools.replace_in_file("QtAV/.qmake.conf", "QTAV_MAJOR_VERSION = 1", "QTAV_MAJOR_VERSION = 1\nLIBS += %s\nINCLUDEPATH += %s\nCONFIG += %s\n" % (' -L'+ ' -L'.join(env_build.lib_paths), ' '.join(env_build.include_paths), build_type))
-                self.run('%s && qmake -r -tp vc QtAV.pro' % (vcvars), cwd="QtAV")
-                ms_env = MSBuild(self)
-                ms_env.build(project_file="QtAV/QtAV.sln", targets=["QtAV", "QtAVWidgets"], upgrade_project=False) # Missing dependency information between targets
-                ms_env.build(project_file="QtAV/QtAV.sln", upgrade_project=False)
-        else:
-            autotools = AutoToolsBuildEnvironment(self, win_bash=tools.os_info.is_windows)
-            envvars = autotools.vars
-            envvars["LD_LIBRARY_PATH"] = "".join([i+":" for i in autotools.library_paths])
-            envvars["LD_RUN_PATH"] = "".join([i+":" for i in autotools.library_paths])
-            with tools.environment_append(envvars):
-                if "RASPBIAN_ROOTFS" in os.environ:
-                    tools.replace_in_file("QtAV/.qmake.conf", "QTAV_MAJOR_VERSION = 1", "QTAV_MAJOR_VERSION = 1\nDEFINES += CAPI_LINK_EGL\n")
-                tools.replace_in_file("QtAV/.qmake.conf", "QTAV_MAJOR_VERSION = 1", "CONFIG += no-examples\nQTAV_MAJOR_VERSION = 1\nLIBS += %s\nINCLUDEPATH += %s\nCONFIG += %s\n" % (' -L'+ ' -L'.join(autotools.library_paths), ' '.join(autotools.include_paths), build_type))
-                self.run('qmake QtAV.pro', win_bash=tools.os_info.is_windows, cwd="QtAV")
-                self.run("make -j %s" % tools.cpu_count(), win_bash=tools.os_info.is_windows, cwd="QtAV")
+        with tools.environment_append({"PATH": self.deps_cpp_info["Qt"].bin_paths}):
+            if self.settings.os == "Windows":
+                env_build = VisualStudioBuildEnvironment(self)
+                with tools.environment_append(env_build.vars):
+                    vcvars = tools.vcvars_command(self.settings)
+                    tools.replace_in_file("QtAV/.qmake.conf", "QTAV_MAJOR_VERSION = 1", "QTAV_MAJOR_VERSION = 1\nLIBS += %s\nINCLUDEPATH += %s\nCONFIG += %s\n" % (' -L'+ ' -L'.join(env_build.lib_paths), ' '.join(env_build.include_paths), build_type))
+                    self.run('%s && qmake -r -tp vc QtAV.pro' % (vcvars), cwd="QtAV")
+                    ms_env = MSBuild(self)
+                    ms_env.build(project_file="QtAV/QtAV.sln", targets=["QtAV", "QtAVWidgets"], upgrade_project=False) # Missing dependency information between targets
+                    ms_env.build(project_file="QtAV/QtAV.sln", upgrade_project=False)
+            else:
+                autotools = AutoToolsBuildEnvironment(self, win_bash=tools.os_info.is_windows)
+                envvars = autotools.vars
+                envvars["LD_LIBRARY_PATH"] = "".join([i+":" for i in autotools.library_paths])
+                envvars["LD_RUN_PATH"] = "".join([i+":" for i in autotools.library_paths])
+                with tools.environment_append(envvars):
+                    if "RASPBIAN_ROOTFS" in os.environ:
+                        tools.replace_in_file("QtAV/.qmake.conf", "QTAV_MAJOR_VERSION = 1", "QTAV_MAJOR_VERSION = 1\nDEFINES += CAPI_LINK_EGL\n")
+                    tools.replace_in_file("QtAV/.qmake.conf", "QTAV_MAJOR_VERSION = 1", "CONFIG += no-examples\nQTAV_MAJOR_VERSION = 1\nLIBS += %s\nINCLUDEPATH += %s\nCONFIG += %s\n" % (' -L'+ ' -L'.join(autotools.library_paths), ' '.join(autotools.include_paths), build_type))
+                    self.run('qmake QtAV.pro', win_bash=tools.os_info.is_windows, cwd="QtAV")
+                    self.run("make -j %s" % tools.cpu_count(), win_bash=tools.os_info.is_windows, cwd="QtAV")
             
 
     def package(self):
@@ -78,7 +79,7 @@ class QtavConan(ConanFile):
         if self.settings.os == "Windows":
             self.copy("QtAV/lib_win_" + arch + "/*Qt*AV*.lib", dst="lib", keep_path=False)
         elif self.settings.os == "Android":
-            self.copy("QtAV/lib_android_" + "/*Qt*AV*.so", dst="lib", keep_path=False)
+            self.copy("QtAV/lib_android_*" + "/*Qt*AV*.so", dst="lib", keep_path=False)
         else:
             self.copy("QtAV/lib_linux_" + arch + "/*Qt*AV*.so*", dst="lib", keep_path=False, symlinks=True)
         
@@ -89,7 +90,7 @@ class QtavConan(ConanFile):
         if self.settings.os == "Windows":
             self.copy("QtAV/lib_win_" + arch + "/*QmlAV*.lib", dst="lib/qml/QtAV", keep_path=False)
         elif self.settings.os == "Android":
-            self.copy("QtAV/lib_android_" + "/*QmlAV*.so", dst="lib/qml/QtAV", keep_path=False)
+            self.copy("QtAV/lib_android_*" + "/*QmlAV*.so", dst="lib/qml/QtAV", keep_path=False)
         else:
             self.copy("QtAV/lib_linux_" + arch + "/*QmlAV*.so", dst="lib/qml/QtAV", keep_path=False, symlinks=True)
 
